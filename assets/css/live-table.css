@@ -93,7 +93,7 @@
 
 /* Export Dropdown */
 .live-table-dropdown {
-    @apply absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:ring-gray-700;
+    @apply absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black focus:outline-none dark:bg-gray-800 dark:ring-gray-700;
 }
 
 /* Responsive Utilities */
@@ -205,7 +205,7 @@
 }
 
 .live-select-dropdown {
-    @apply absolute z-50 w-full mt-1 max-h-60 overflow-auto rounded-md bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none;
+    @apply absolute z-50 w-full mt-1 max-h-60 overflow-auto rounded-md bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black focus:outline-none;
 }
 
 .live-select-option {
@@ -255,7 +255,7 @@
         @apply min-w-full;
     }
     .dropdown-content {
-        @apply absolute right-0 z-50 mt-2 origin-top-right rounded-lg bg-white shadow-xl ring-1 ring-black ring-opacity-5 backdrop-blur-sm backdrop-saturate-150 dark:bg-gray-800 dark:ring-gray-700;
+        @apply absolute right-0 z-50 mt-2 origin-top-right rounded-lg bg-white shadow-xl ring-1 ring-black backdrop-blur-sm backdrop-saturate-150 dark:bg-gray-800 dark:ring-gray-700;
         @apply border border-gray-200 dark:border-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500;
     }
     .menu {
