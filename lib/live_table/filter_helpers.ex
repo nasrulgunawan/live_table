@@ -30,62 +30,25 @@ defmodule LiveTable.FilterHelpers do
             {k, "false"}, acc ->
               Map.delete(acc, k)
 
-            # Handle SutraUI.LiveSelect single mode: JSON string like "{\"label\":\"X\",\"value\":[1,\"desc\"]}"
-            {key, "{" <> _ = json}, acc ->
+            # Handle simple select values
+            {key, value}, acc when is_binary(value) and value != "" ->
               case get_filter(key) do
                 %LiveTable.Select{} ->
-                  case Jason.decode(json) do
-                    {:ok, %{"value" => [id | _]}} ->
-                      Map.put(acc, key, %{id: [id]})
-
-                    {:ok, %{"value" => id}} when not is_list(id) ->
-                      Map.put(acc, key, %{id: [id]})
-
-                    _ ->
-                      acc
-                  end
-
+                  Map.put(acc, key, %{id: [value]})
                 _ ->
                   acc
               end
 
-            # Handle SutraUI.LiveSelect tags mode: list of JSON strings like ["{\"label\":\"X\",\"value\":[1,\"desc\"]}"]
+            # Handle multiple select values
             {key, values}, acc when is_list(values) ->
               case get_filter(key) do
                 %LiveTable.Select{} ->
-                  ids =
-                    values
-                    |> Enum.map(fn
-                      # SutraUI.LiveSelect format: {"label": "...", "value": [id, desc]} or {"label": "...", "value": id}
-                      "{" <> _ = json ->
-                        case Jason.decode(json) do
-                          {:ok, %{"value" => [id | _]}} -> id
-                          {:ok, %{"value" => id}} when not is_list(id) -> id
-                          _ -> nil
-                        end
-
-                      # Legacy live_select format: "[id, desc]"
-                      "[" <> _ = json ->
-                        case Jason.decode(json) do
-                          {:ok, [id | _]} -> id
-                          _ -> nil
-                        end
-
-                      # Empty string (cleared selection)
-                      "" ->
-                        nil
-
-                      _ ->
-                        nil
-                    end)
-                    |> Enum.reject(&is_nil/1)
-
-                  if ids == [] do
+                  filtered_values = Enum.reject(values, &(&1 == "" or is_nil(&1)))
+                  if filtered_values == [] do
                     Map.delete(acc, key)
                   else
-                    Map.put(acc, key, %{id: ids})
+                    Map.put(acc, key, %{id: filtered_values})
                   end
-
                 _ ->
                   acc
               end

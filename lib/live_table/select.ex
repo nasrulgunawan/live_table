@@ -19,17 +19,15 @@ defmodule LiveTable.Select do
     - `:css_classes` - CSS classes for the main container
     - `:label_classes` - CSS classes for the label element
 
-    ### LiveSelect Options
+    ### Select Options
 
-    These options are passed directly to the underlying `SutraUI.LiveSelect` component:
+    These options control the behavior of the select component:
 
-    - `:mode` - Selection mode (default: `:tags`)
-      - `:single` - Select one option, input shows selected label
-      - `:tags` - Multi-select with tag pills, dropdown closes after each selection
-      - `:quick_tags` - Multi-select with tag pills, dropdown stays open for rapid selection
-    - `:allow_clear` - Show clear button in single mode (default: `false`)
+    - `:mode` - Selection mode (default: `:multiple`)
+      - `:single` - Select one option
+      - `:multiple` - Multi-select with multiple options allowed
+    - `:allow_clear` - Show clear button (default: `false`)
     - `:max_selectable` - Maximum number of selections allowed, 0 = unlimited (default: `0`)
-    - `:user_defined_options` - Allow users to create custom options by typing (default: `false`)
     - `:debounce` - Debounce time in ms for search input (default: `100`)
 
     For default values, see: [LiveTable.Select source code](https://github.com/gurujada/live_table/blob/master/lib/live_table/select.ex)
@@ -236,9 +234,9 @@ defmodule LiveTable.Select do
     selected: [],
     placeholder: "Search...",
     css_classes: "",
-    label_classes: "block text-sm font-medium leading-6 text-gray-900 dark:text-gray-100 mb-2",
-    # LiveSelect options
-    mode: :tags,
+    label_classes: "block text-sm font-medium leading-6 mb-2",
+    # Select options
+    mode: :multiple,
     allow_clear: false,
     max_selectable: 0,
     user_defined_options: false,
@@ -269,50 +267,53 @@ defmodule LiveTable.Select do
       <label :if={@filter.options.label} class={@filter.options.label_classes}>
         {@filter.options.label}
       </label>
-      <.live_component
-        module={SutraUI.LiveSelect}
-        field={Phoenix.Component.to_form(%{})["filters[#{@key}]"]}
+      <select
         id={"#{@key}"}
-        placeholder={@filter.options.placeholder}
-        mode={@filter.options[:mode] || :tags}
-        allow_clear={@filter.options[:allow_clear] || false}
-        max_selectable={@filter.options[:max_selectable] || 0}
-        user_defined_options={@filter.options[:user_defined_options] || false}
-        debounce={@filter.options[:debounce]}
-        class="live-table-select"
+        name={"filters[#{@key}]"}
+        class="select select-sm w-full"
+        phx-change="sort"
+        multiple={@filter.options[:mode] != :single}
       >
-        <:option :let={option}>
-          {render_option_template(@filter.options.option_template, option)}
-        </:option>
-      </.live_component>
+        <option value="" disabled selected={is_nil(@applied_filters[@key])}>
+          {@filter.options.placeholder}
+        </option>
+        <option
+          :for={option <- get_options(@filter.options)}
+          value={get_option_value(option)}
+          selected={is_selected?(option, @applied_filters[@key])}
+        >
+          {get_option_label(option)}
+        </option>
+      </select>
     </div>
     """
   end
 
-  defp render_option_template(nil, %{label: label, value: [id, description]}) do
-    assigns = %{label: label, id: id, description: description}
+  defp get_options(%{options: options}) when is_list(options), do: options
+  defp get_options(_), do: []
 
-    ~H"""
-    <div class="flex flex-col">
-      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{@label}</span>
-      <span class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-        ID: {@id} • {@description}
-      </span>
-    </div>
-    """
+  defp get_option_value(%{value: [id | _]}), do: id
+  defp get_option_value(%{value: value}), do: value
+  defp get_option_value({_label, [id | _]}), do: id
+  defp get_option_value({_label, value}), do: value
+
+  defp get_option_label(%{label: label}), do: label
+  defp get_option_label({label, _value}), do: label
+
+  defp is_selected?(_option, nil), do: false
+  defp is_selected?(option, selected_values) when is_list(selected_values) do
+    value = get_option_value(option)
+    Enum.any?(selected_values, fn selected ->
+      case selected do
+        %{"value" => [^value | _]} -> true
+        %{"value" => ^value} -> true
+        ^value -> true
+        _ -> false
+      end
+    end)
+  end
+  defp is_selected?(option, selected_value) do
+    get_option_value(option) == selected_value
   end
 
-  # Fallback for options without the expected structure
-  defp render_option_template(nil, %{label: label}) do
-    assigns = %{label: label}
-
-    ~H"""
-    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{@label}</span>
-    """
-  end
-
-  # Custom template provided as a function
-  defp render_option_template(template_fn, option) do
-    template_fn.(option)
-  end
 end

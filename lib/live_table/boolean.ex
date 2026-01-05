@@ -70,8 +70,6 @@ defmodule LiveTable.Boolean do
 
   import Ecto.Query
   use Phoenix.Component
-  import SutraUI.Checkbox, only: [checkbox: 1]
-  import SutraUI.Label, only: [label: 1]
 
   defstruct [:field, :key, :options]
 
@@ -90,15 +88,16 @@ defmodule LiveTable.Boolean do
     ~H"""
     <div class="flex items-center gap-2">
       <input type="hidden" name={"filters[#{@key}]"} value="false" />
-      <.checkbox
+      <input
+        type="checkbox"
         id={"filters-#{@key}"}
         name={"filters[#{@key}]"}
         checked={Map.has_key?(@applied_filters, @key) || Map.get(@filter.options, :default)}
-        class={Map.get(@filter.options, :class, "")}
+        class={["checkbox checkbox-sm", Map.get(@filter.options, :class, "")]}
       />
-      <.label for={"filters-#{@key}"}>
+      <label for={"filters-#{@key}"} class="label-text">
         {@filter.options.label}
-      </.label>
+      </label>
     </div>
     """
   end

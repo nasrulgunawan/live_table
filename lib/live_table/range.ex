@@ -56,7 +56,6 @@ defmodule LiveTable.Range do
   import Ecto.Query
   use Phoenix.Component
   import LiveTable.TableConfig, only: [deep_merge: 2]
-  import SutraUI.RangeSlider, only: [range_slider: 1]
 
   defstruct [:field, :key, :options]
 
@@ -69,16 +68,10 @@ defmodule LiveTable.Range do
     current_min: nil,
     current_max: nil,
     label: "Range",
-    pips: false,
-    pips_mode: "positions",
-    pips_values: [0, 25, 50, 75, 100],
     unit: "",
     css_classes: "",
-    slider_classes: "w-full h-2 mt-6 mb-8",
-    label_classes: "block text-sm font-medium leading-6 text-foreground",
-    slider_options: %{
-      tooltips: true
-    }
+    slider_classes: "w-full",
+    label_classes: "block text-sm font-medium leading-6"
   }
 
   @doc false
@@ -114,60 +107,58 @@ defmodule LiveTable.Range do
       assigns
       |> Map.put(:current_min, current_min)
       |> Map.put(:current_max, current_max)
-      |> Map.put(:pips_config, build_pips_config(assigns.filter.options))
 
     ~H"""
     <div class={@filter.options.css_classes}>
       <label :if={@filter.options.label} class={@filter.options.label_classes}>
         {@filter.options.label}
-        <span :if={@filter.options.unit != ""} class="text-muted-foreground">
+        <span :if={@filter.options.unit != ""} class="text-base-content/60">
           ({@filter.options.unit})
         </span>
       </label>
-      <div class="mt-3">
-        <.range_slider
-          name={@key}
+      <div class="mt-3 space-y-2">
+        <div class="flex items-center gap-2">
+          <input
+            type="number"
+            name={"#{@key}[min]"}
+            id={"range_filter_min[#{@key}]"}
+            min={@filter.options.min}
+            max={@filter.options.max}
+            step={@filter.options.step}
+            value={@current_min || @filter.options.default_min}
+            class="input input-sm w-20"
+            placeholder="Min"
+            phx-change="range_change"
+          />
+          <span class="text-base-content/60">to</span>
+          <input
+            type="number"
+            name={"#{@key}[max]"}
+            id={"range_filter_max[#{@key}]"}
+            min={@filter.options.min}
+            max={@filter.options.max}
+            step={@filter.options.step}
+            value={@current_max || @filter.options.default_max}
+            class="input input-sm w-20"
+            placeholder="Max"
+            phx-change="range_change"
+          />
+        </div>
+        <input
+          type="range"
+          name={"#{@key}[range]"}
           id={"range_filter[#{@key}]"}
           min={@filter.options.min}
           max={@filter.options.max}
           step={@filter.options.step}
-          value_min={@current_min || @filter.options.default_min}
-          value_max={@current_max || @filter.options.default_max}
-          tooltips={@filter.options.slider_options.tooltips}
-          pips={@pips_config}
-          on_change="range_change"
-          class={@filter.options.slider_classes}
+          value={@current_min || @filter.options.default_min}
+          class={["range range-sm", @filter.options.slider_classes]}
+          phx-change="range_change"
         />
       </div>
     </div>
     """
   end
-
-  # Build pips config for Sutra's range_slider format
-  defp build_pips_config(%{pips: false}), do: nil
-
-  defp build_pips_config(%{pips: true, pips_mode: "positions", pips_values: values}) do
-    %{mode: :positions, values: values}
-  end
-
-  defp build_pips_config(%{pips: true, pips_mode: "count", pips_values: values}) do
-    %{mode: :count, count: length(values)}
-  end
-
-  defp build_pips_config(%{pips: true, pips_mode: "values", pips_values: values}) do
-    %{mode: :values, values: values}
-  end
-
-  defp build_pips_config(%{pips: true, pips_mode: "steps"}) do
-    %{mode: :steps}
-  end
-
-  defp build_pips_config(%{pips: true}) do
-    # Default pips
-    %{mode: :positions, values: [0, 25, 50, 75, 100]}
-  end
-
-  defp build_pips_config(_), do: nil
 
   defp get_current_min_max(applied_filters, key) do
     case Map.get(applied_filters, key) do

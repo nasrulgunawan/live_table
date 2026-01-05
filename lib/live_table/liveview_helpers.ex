@@ -182,7 +182,7 @@ defmodule LiveTable.LiveViewHelpers do
               end) || %{label: to_string(id), value: id}
             end)
 
-          send_update(SutraUI.LiveSelect, id: key, restore_selection: selection)
+          send_update(Phoenix.LiveView.JS, id: key, restore_selection: selection)
         end
       end
 
@@ -261,7 +261,8 @@ defmodule LiveTable.LiveViewHelpers do
         for {_filter_key, filter} <- filters() do
           case filter do
             %LiveTable.Select{} ->
-              send_update(SutraUI.LiveSelect, id: filter.key, reset_value: [])
+              # Reset select filter - for simple select, we'll handle this differently
+              :ok
 
             _ ->
               :ok
@@ -355,7 +356,8 @@ defmodule LiveTable.LiveViewHelpers do
               options
           end
 
-        send_update(SutraUI.LiveSelect, id: id, options: options)
+        # Update select options - for simple select, we'll handle this differently
+        :ok
 
         {:noreply, socket}
       end

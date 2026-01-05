@@ -4,10 +4,6 @@ defmodule LiveTable.TableComponent do
     quote do
       use Phoenix.Component
       import LiveTable.SortHelpers
-      import SutraUI.DropdownMenu
-      import SutraUI.InputGroup
-      import SutraUI.Select
-      import SutraUI.Empty
       alias Phoenix.LiveView.JS
 
       def live_table(var!(assigns)) do
@@ -105,8 +101,8 @@ defmodule LiveTable.TableComponent do
                   class="w-56"
                 >
                   <label for="table-search" class="sr-only">Search</label>
-                  <.input_group>
-                    <:prefix type="icon">
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="24"
@@ -117,46 +113,44 @@ defmodule LiveTable.TableComponent do
                         stroke-width="2"
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        class="size-4 text-muted-foreground"
+                        class="size-4 text-base-content/60"
                         aria-hidden="true"
                       >
                         <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
                       </svg>
-                    </:prefix>
+                    </div>
                     <input
                       type="text"
                       name="search"
                       autocomplete="off"
                       id="table-search"
-                      class="input w-full pl-9"
+                      class="input input-sm w-full pl-9"
                       placeholder={@table_options[:search][:placeholder]}
                       value={@options["filters"]["search"]}
                       phx-debounce={@table_options[:search][:debounce]}
                     />
-                  </.input_group>
+                  </div>
                 </div>
 
-                <.select
+                <select
                   :if={
                     @options["pagination"]["paginate?"] &&
                       @table_options.pagination[:mode] != :infinite_scroll
                   }
                   id="per-page-select"
                   name="per_page"
-                  value={to_string(@options["pagination"]["per_page"])}
-                  class="w-24"
-                  trigger_class="w-full"
+                  class="select select-sm w-24"
+                  phx-change="sort"
                 >
-                  <:trigger>
-                    {@options["pagination"]["per_page"]}
-                  </:trigger>
-                  <.select_option
+                  <option
                     :for={size <- get_in(@table_options, [:pagination, :sizes])}
                     value={to_string(size)}
-                    label={to_string(size)}
-                  />
-                </.select>
-                
+                    selected={to_string(size) == to_string(@options["pagination"]["per_page"])}
+                  >
+                    {size}
+                  </option>
+                </select>
+
         <!-- Filter toggle -->
                 <button
                   :if={length(@filters) > 3}
@@ -192,7 +186,7 @@ defmodule LiveTable.TableComponent do
                 <.exports formats={get_in(@table_options, [:exports, :formats])} />
               </div>
             </div>
-            
+
         <!-- Filters section -->
             <div id="filters-container" class={["", length(@filters) > 3 && "hidden"]}>
               <.filters filters={@filters} applied_filters={@options["filters"]} />
@@ -218,20 +212,20 @@ defmodule LiveTable.TableComponent do
           <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
             <div class="min-w-full py-2 align-middle sm:px-6 lg:px-8">
               <div class={[
-                "shadow sm:rounded-lg border border-border",
+                "bg-base-100 rounded-lg shadow",
                 @table_options[:fixed_header] && "max-h-[600px] overflow-y-auto",
                 !@table_options[:fixed_header] && "overflow-hidden"
               ]}>
-                <table class="table min-w-full">
+                <table class="table table-sm w-full">
                   <thead class={[
-                    "bg-muted",
+                    "bg-base-200",
                     @table_options[:fixed_header] && "sticky top-0 z-10"
                   ]}>
                     <tr>
                       <th
                         :for={{key, field} <- visible_fields(@fields)}
                         scope="col"
-                        class="px-3 py-3 text-start text-sm font-semibold text-foreground"
+                        class="px-3 py-3 text-start text-sm font-semibold"
                       >
                         <.sort_link
                           key={key}
@@ -243,7 +237,7 @@ defmodule LiveTable.TableComponent do
                       <th
                         :if={has_actions(@actions)}
                         scope="col"
-                        class="px-3 py-3 text-center text-sm font-semibold text-foreground"
+                        class="px-3 py-3 text-center text-sm font-semibold"
                       >
                         {actions_label(@actions)}
                       </th>
@@ -252,7 +246,7 @@ defmodule LiveTable.TableComponent do
                   <tbody
                     id="resources-stream"
                     phx-update={@table_options[:use_streams] && "stream"}
-                    class="bg-background"
+                    class="bg-base-100"
                   >
                     <tr id="empty-placeholder" class="only:table-row hidden hover:bg-transparent">
                       <td colspan={
@@ -353,8 +347,8 @@ defmodule LiveTable.TableComponent do
 
       defp render_empty_state(var!(assigns)) do
         ~H"""
-        <.empty>
-          <:icon>
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <div class="mb-4 text-base-content/40">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -370,19 +364,19 @@ defmodule LiveTable.TableComponent do
             >
               <path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H14.76a2 2 0 0 1 1.74 1.1L18 14" /><path d="M6 14h12v5a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-5Z" /><path d="M21 14V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7" />
             </svg>
-          </:icon>
-          <:title>No data</:title>
-          <:description>
+          </div>
+          <h3 class="text-lg font-semibold text-base-content mb-2">No data</h3>
+          <p class="text-base-content/60">
             No records found. Try adjusting your filters or create a new record.
-          </:description>
-        </.empty>
+          </p>
+        </div>
         """
       end
 
       defp render_row(%{table_options: %{use_streams: false}} = var!(assigns)) do
         ~H"""
-        <tr :for={resource <- @streams}>
-          <td :for={{key, field} <- @fields} class="whitespace-nowrap px-3 py-3.5 text-sm text-foreground">
+        <tr :for={resource <- @streams} class="hover:bg-base-200/40">
+          <td :for={{key, field} <- @fields} class="whitespace-nowrap px-3 py-3.5 text-sm">
             {render_cell(Map.get(resource, key), field, resource)}
           </td>
           <td :if={has_actions(@actions)}>
@@ -394,8 +388,8 @@ defmodule LiveTable.TableComponent do
 
       defp render_row(%{table_options: %{use_streams: true}} = var!(assigns)) do
         ~H"""
-        <tr :for={{id, resource} <- @streams.resources} id={id}>
-          <td :for={{key, field} <- @fields} class="whitespace-nowrap px-3 py-3.5 text-sm text-foreground">
+        <tr :for={{id, resource} <- @streams.resources} id={id} class="hover:bg-base-200/40">
+          <td :for={{key, field} <- @fields} class="whitespace-nowrap px-3 py-3.5 text-sm">
             {render_cell(Map.get(resource, key), field, resource)}
           </td>
           <td :if={has_actions(@actions)}>
@@ -433,12 +427,12 @@ defmodule LiveTable.TableComponent do
         var!(assigns) = assign(var!(assigns), :cols, cols)
 
         ~H"""
-        <div :if={@filters != []} class="filter-bar">
+        <div :if={@filters != []} class="space-y-4">
           <div class={[
-            "filter-bar-grid",
+            "grid gap-4",
             filter_bar_cols_class(@cols)
           ]}>
-            <div :for={{key, filter} <- @filters} class="filter-bar-item">
+            <div :for={{key, filter} <- @filters}>
               {filter.__struct__.render(%{
                 key: key,
                 filter: filter,
@@ -448,13 +442,13 @@ defmodule LiveTable.TableComponent do
           </div>
           <div
             :if={@applied_filters != %{"search" => ""} and @applied_filters != %{}}
-            class="filter-bar-actions"
+            class="flex justify-end"
           >
             <button
               type="button"
               phx-click="sort"
               phx-value-clear_filters="true"
-              class="filter-bar-clear"
+              class="btn btn-outline btn-sm"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -480,10 +474,10 @@ defmodule LiveTable.TableComponent do
 
       defp filter_bar_cols_class(cols) do
         case cols do
-          1 -> "filter-bar-cols-1"
-          2 -> "filter-bar-cols-2"
-          3 -> "filter-bar-cols-3"
-          _ -> "filter-bar-cols-3"
+          1 -> "grid-cols-1"
+          2 -> "grid-cols-1 md:grid-cols-2"
+          3 -> "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+          _ -> "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
         end
       end
 
@@ -491,8 +485,8 @@ defmodule LiveTable.TableComponent do
         ~H"""
         <nav class="flex items-center justify-between px-4 py-3 sm:px-6" aria-label="Pagination">
           <div class="hidden sm:block">
-            <p class="text-sm text-muted-foreground">
-              Page <span class="font-medium text-foreground">{@current_page}</span>
+            <p class="text-sm text-base-content/60">
+              Page <span class="font-medium">{@current_page}</span>
             </p>
           </div>
           <div class="flex flex-1 justify-between sm:justify-end">
@@ -500,8 +494,8 @@ defmodule LiveTable.TableComponent do
               phx-click="sort"
               phx-value-page={String.to_integer(@current_page) - 1}
               class={[
-                "btn-outline",
-                String.to_integer(@current_page) == 1 && "opacity-50 cursor-not-allowed"
+                "btn btn-outline btn-sm",
+                String.to_integer(@current_page) == 1 && "btn-disabled"
               ]}
               disabled={String.to_integer(@current_page) == 1}
             >
@@ -510,7 +504,7 @@ defmodule LiveTable.TableComponent do
             <button
               phx-click="sort"
               phx-value-page={String.to_integer(@current_page) + 1}
-              class={["btn-outline ml-3", !@has_next_page && "opacity-50 cursor-not-allowed"]}
+              class={["btn btn-outline btn-sm ml-3", !@has_next_page && "btn-disabled"]}
               disabled={!@has_next_page}
             >
               Next
@@ -522,8 +516,8 @@ defmodule LiveTable.TableComponent do
 
       def exports(var!(assigns)) do
         ~H"""
-        <.dropdown_menu id="export-dropdown">
-          <:trigger>
+        <div class="dropdown dropdown-end">
+          <div tabindex="0" role="button" class="btn btn-sm">
             <span class="flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -547,37 +541,39 @@ defmodule LiveTable.TableComponent do
               </svg>
               Export
             </span>
-          </:trigger>
-          <.dropdown_item :for={format <- @formats}>
-            <button
-              type="button"
-              class="flex items-center gap-2"
-              phx-click={if(format == :csv, do: "export-csv", else: "export-pdf")}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="size-4"
-                aria-hidden="true"
+          </div>
+          <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+            <li :for={format <- @formats}>
+              <button
+                type="button"
+                class="flex items-center gap-2"
+                phx-click={if(format == :csv, do: "export-csv", else: "export-pdf")}
               >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line
-                  x1="12"
-                  x2="12"
-                  y1="15"
-                  y2="3"
-                />
-              </svg>
-              Export as {String.upcase(to_string(format))}
-            </button>
-          </.dropdown_item>
-        </.dropdown_menu>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="size-4"
+                  aria-hidden="true"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line
+                    x1="12"
+                    x2="12"
+                    y1="15"
+                    y2="3"
+                  />
+                </svg>
+                Export as {String.upcase(to_string(format))}
+              </button>
+            </li>
+          </ul>
+        </div>
         """
       end
 
